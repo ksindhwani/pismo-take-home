@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pismo
+      POSTGRES_PASSWORD: pismo_password
+      POSTGRES_DB: transaction_service
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./database/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./database/db/seed.sql:/docker-entrypoint-initdb.d/seed.sql
+
+  app:
+    build: .
+    restart: unless-stopped
+    env_file:
+        - .env
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
