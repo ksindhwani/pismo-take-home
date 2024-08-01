@@ -23,5 +23,34 @@ System must have Docker installed
 `docker-compose -f docker-compose.yml up -d`
 
 
+# Endpoints
+
+## Create Account
+
+```
+curl --location 'http://localhost:8080/accounts' \
+--header 'Content-Type: application/json' \
+--data '{
+"document_number": "12345678902"
+}'
+```
+
+## Create Transaction
+
+```
+curl --location 'http://localhost:8081/transactions' \
+--header 'Content-Type: application/json' \
+--data '{
+"account_id": 4,
+"operation_type_id": 3,
+"amount": 123.45
+}'
+```
+
+## Get Account
+
+```
+curl --location 'http://localhost:8081/accounts/12'
+```
 
 
