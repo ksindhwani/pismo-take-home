@@ -13,10 +13,11 @@ System must have Docker installed
 # Setup Instructions
 
 
-1. UnZip the folder
-2. Open the application directory in terminal 
+1. git clone the repo
+2. Rename `env.Template` to `.env`
+3. Open the application directory in terminal 
 
-3. Run the application through this command 
+4. Run the application through this command 
 
 `docker-compose -f docker-compose.yml up -d`
 
