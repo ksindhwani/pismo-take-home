@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+	"math"
 	"time"
 
 	"github.com/ksindhwani/pismo/database"
@@ -18,7 +20,7 @@ type CreateTransactionRequest struct {
 }
 
 type TransactionService interface {
-	CreateTransaction(request CreateTransactionRequest) (uint, error)
+	CreateTransaction(req CreateTransactionRequest, operationType model.OperationType) (uint, error)
 	CreateAccount(request CreateAccountRequest) (uint, error)
 	GetAccount(accountId int) (model.Account, error)
 }
@@ -34,13 +36,18 @@ func NewTransactionService(tDb database.TransactionDatabase) TransactionService 
 
 }
 
-func (ts *TService) CreateTransaction(req CreateTransactionRequest) (uint, error) {
+func (ts *TService) CreateTransaction(req CreateTransactionRequest, operationType model.OperationType) (uint, error) {
 
 	transaction := model.Transaction{
 		AccountId:       req.AccountID,
 		OperationTypeId: req.OperationTypeId,
 		Amount:          req.Amount,
+		Balance:         req.Amount,
 		EventDate:       time.Now(),
+	}
+
+	if !operationType.IsPurchaseType() {
+		return ts.dischargeTransaction(transaction)
 	}
 
 	return ts.TransactionDb.CreateTransaction(&transaction)
@@ -55,5 +62,33 @@ func (ts *TService) CreateAccount(request CreateAccountRequest) (uint, error) {
 
 func (ts *TService) GetAccount(accountId int) (model.Account, error) {
 	return ts.TransactionDb.GetAccount(accountId)
+
+}
+
+func (ts *TService) dischargeTransaction(transaction model.Transaction) (uint, error) {
+
+	unPaidTranactions, err := ts.TransactionDb.GetUnPaidTransactions()
+
+	if err != nil {
+		return 0, fmt.Errorf("unable to fetch unpaid transactions %v", err)
+	}
+
+	for index := 0; index < len(unPaidTranactions); index++ {
+
+		if transaction.Balance <= 0 {
+			break
+		}
+
+		balance := math.Abs(unPaidTranactions[index].Balance)
+		if transaction.Balance >= balance {
+			unPaidTranactions[index].Balance = 0
+			transaction.Balance -= balance
+		} else {
+			unPaidTranactions[index].Balance += transaction.Balance
+			transaction.Balance = 0
+		}
+	}
+
+	return ts.TransactionDb.UpdateBalance(unPaidTranactions, transaction)
 
 }

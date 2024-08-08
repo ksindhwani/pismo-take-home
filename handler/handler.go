@@ -39,7 +39,7 @@ func (th *TransactionHandler) CreateTransaction(c *gin.Context) {
 	}
 
 	// create record in database
-	id, err := th.TransactionService.CreateTransaction(req)
+	id, err := th.TransactionService.CreateTransaction(req, OperationType)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, req, fmt.Errorf("unable to create transaction - %v", err))
 		return

@@ -13,6 +13,8 @@ type TransactionDatabase interface {
 	CreateTransaction(*model.Transaction) (uint, error)
 	CreateAccount(account *model.Account) (uint, error)
 	GetAccount(accountId int) (model.Account, error)
+	GetUnPaidTransactions() ([]model.Transaction, error)
+	UpdateBalance(unPaidTranactions []model.Transaction, transaction model.Transaction) (uint, error)
 }
 
 type transactionDatabase struct {
@@ -44,6 +46,42 @@ func (td *transactionDatabase) GetAccount(accountId int) (model.Account, error) 
 
 	err := td.TranactionDB.First(&account, accountId).Error
 	return account, err
+}
+
+func (td *transactionDatabase) GetUnPaidTransactions() ([]model.Transaction, error) {
+
+	var unPaidTransactions []model.Transaction
+
+	td.TranactionDB.Raw("SELECT * from transactions WHERE balance < 0  order by event_date").Scan(&unPaidTransactions)
+
+	return unPaidTransactions, nil
+}
+
+func (td *transactionDatabase) UpdateBalance(unPaidTranactions []model.Transaction, transaction model.Transaction) (uint, error) {
+
+	td.TranactionDB.Transaction(func(tx *gorm.DB) error {
+
+		for _, unPaid := range unPaidTranactions {
+			if err := tx.Save(&model.Transaction{
+				TransactionId:   unPaid.TransactionId,
+				Balance:         unPaid.Balance,
+				AccountId:       unPaid.AccountId,
+				Amount:          unPaid.Amount,
+				OperationTypeId: unPaid.OperationTypeId}).Error; err != nil {
+				return err
+			}
+		}
+
+		if err := tx.Create(&transaction).Error; err != nil {
+			return err
+		}
+
+		// return nil will commit the whole transaction
+		return nil
+
+	})
+	return transaction.TransactionId, nil
+
 }
 
 func getTransactionDbConnectionString(cfg *config.Config) string {

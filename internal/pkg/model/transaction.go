@@ -9,5 +9,6 @@ type Transaction struct {
 	AccountId       uint
 	OperationTypeId uint
 	Amount          float64
+	Balance         float64
 	EventDate       time.Time
 }
