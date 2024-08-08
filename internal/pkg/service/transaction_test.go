@@ -136,7 +136,7 @@ func TestCreateTransaction(t *testing.T) {
 				Return(test.expectedId, test.expectedError).
 				Times(1)
 
-			id, _ := service.CreateTransaction(test.request)
+			id, _ := service.CreateTransaction(test.request, model.NORMAL_PURCHASE)
 			assert.Equal(t, test.expectedId, id)
 			assert.NoError(t, test.expectedError)
 
@@ -179,7 +179,7 @@ func TestCreateTransactionError(t *testing.T) {
 				Return(test.expectedId, test.expectedError).
 				Times(1)
 
-			id, err := service.CreateTransaction(test.request)
+			id, err := service.CreateTransaction(test.request, model.NORMAL_PURCHASE)
 			assert.Equal(t, test.expectedId, id)
 			assert.EqualError(t, test.expectedError, err.Error())
 
